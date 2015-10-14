@@ -89,6 +89,32 @@ p {
 }
 ```
 
+## API
+
+### mergeRules([options])
+
+#### options
+
+##### legacy
+
+Type: `boolean`
+Default: `false`
+
+Pass `true` to disable merging rules where legacy browsers would not recognise
+the result; for example, these selectors will not be merged:
+
+```css
+div {
+    color: #fff
+}
+
+a ~ b {
+    color: #fff
+}
+```
+
+Supports IE 8 only.
+
 ## Usage
 
 See the [PostCSS documentation](https://github.com/postcss/postcss#usage) for

@@ -201,6 +201,21 @@ let tests = [{
     message: 'should not be responsible for deduping selectors when merging',
     fixture: 'h1,h2{display:block}h2,h1{display:block}',
     expected: 'h1,h2,h2,h1{display:block}'
+}, {
+    message: 'should not merge attribute selectors in legacy mode',
+    fixture: 'a[href^="bar"]{display:block}div{display:block}',
+    expected: 'a[href^="bar"]{display:block}div{display:block}',
+    options: {legacy: true}
+}, {
+    message: 'should not merge pseudo selectors in legacy mode',
+    fixture: ':empty{color:#fff}div{color:#fff}',
+    expected: ':empty{color:#fff}div{color:#fff}',
+    options: {legacy: true}
+}, {
+    message: 'should not merge general sibling combinators in legacy mode',
+    fixture: 'div{color:#fff}a ~ b{color:#fff}',
+    expected: 'div{color:#fff}a ~ b{color:#fff}',
+    options: {legacy: true}
 }];
 
 function process (css, options) {

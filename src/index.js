@@ -2,8 +2,8 @@
 
 import postcss from 'postcss';
 import clone from './lib/clone';
+import legacy from './lib/legacy';
 
-const list = postcss.list;
 const prefixes = ['-webkit-', '-moz-', '-ms-', '-o-'];
 
 function intersect (a, b, not) {
@@ -31,14 +31,6 @@ function sameParent (ruleA, ruleB) {
         sameType = sameType && ruleA.parent.params === ruleB.parent.params;
     }
     return hasParent ? sameType : true;
-}
-
-function canMerge (ruleA, ruleB) {
-    let a = list.comma(ruleA.selector);
-    let b = list.comma(ruleB.selector);
-
-    let parent = sameParent(ruleA, ruleB);
-    return parent && (a.concat(b).every(noVendor) || sameVendor(a, b));
 }
 
 let getDecls = rule => rule.nodes.map(String);
@@ -73,7 +65,7 @@ function partialMerge (first, second) {
             let base = decl.prop.split('-')[0];
             let canMove = difference.every(d => d.split(':')[0] !== base);
             if (intersects && canMove) {
-                callback.call(this, decl);
+                callback(decl);
             }
         };
     };
@@ -102,7 +94,7 @@ function partialMerge (first, second) {
     }
 }
 
-function selectorMerger () {
+function selectorMerger (canMerge) {
     let cache = null;
     return function (rule) {
         // Prime the cache with the first rule, or alternately ensure that it is
@@ -144,8 +136,19 @@ function selectorMerger () {
     };
 }
 
-export default postcss.plugin('postcss-merge-rules', () => {
-    return css => {
-        css.walkRules(selectorMerger());
-    };
+export default postcss.plugin('postcss-merge-rules', opts => {
+    opts = opts || {};
+    let mergeConditions = [
+        (ruleA, ruleB) => sameParent(ruleA, ruleB),
+        (ruleA, ruleB) => {
+            let a = ruleA.selectors;
+            let b = ruleB.selectors;
+            return a.concat(b).every(noVendor) || sameVendor(a, b);
+        }
+    ];
+    if (opts.legacy) {
+        mergeConditions.push(legacy);
+    }
+    let canMerge = (a, b) => mergeConditions.every(condition => condition(a, b));
+    return css => css.walkRules(selectorMerger(canMerge));
 });
